@@ -1,43 +1,32 @@
-import datetime
-
-from django.shortcuts import render, HttpResponse
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import cv2
 import pybase64
 import pytesseract
-import numpy as np
+from django.views.decorators.http import require_POST
+
+__file_name = 'test.png'
 
 
-def home(request):
-    return HttpResponse("Response form home request here!!")
-
-
+@require_POST
 @api_view(['POST'])
 def sendfileinbase64(base64request):
     decoded_base64 = pybase64.b64decode(base64request.data)
-
-    file = open('test.png', 'wb')
-    file.write(decoded_base64)
-    file.close()
+    try:
+        file = open(__file_name, 'wb')
+        file.write(decoded_base64)
+        file.close()
+    except Exception as e:
+        return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
 
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-    img = cv2.imread('test.png')
+    try:
+        img = cv2.imread(__file_name)
 
-    txt = pytesseract.image_to_string(img, lang='eng')
+        txt = pytesseract.image_to_string(img, lang='eng')
+    except Exception as e:
+        return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response(txt)
-
-
-
-@api_view(['POST'])
-def test(request):
-    return Response(request.data)
-
-
-
-
-
-
-
